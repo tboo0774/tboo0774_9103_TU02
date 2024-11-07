@@ -1,7 +1,7 @@
 // Define the radius, number of rows, and number of columns for the cylinders in the Grass element
 let cylinderRadius = 10;
-let cylinderRows = 50;
-let cylinderCols = 50;
+let cylinderRows;
+let cylinderCols;
 
 // Create an empty array to store circles in the River element
 let riverCircles = [];
@@ -10,13 +10,21 @@ let riverCircles = [];
 let ifDrawTree = true;
 
 function setup() {
-  createCanvas(1000, 1000); // Set canvas size to 1000*1000 px
+  createCanvas(windowWidth, windowHeight); // Set canvas size to window width and height
   angleMode(DEGREES); // Use degrees, as opposed to radians, to measure angles
   noLoop(); // Prevent continuous looping as we are drawing a static artwork
 
+    // Calculate cylinder dimensions based on canvas size
+    cylinderRows = Math.floor(height / (cylinderRadius * 0.6));
+    cylinderCols = Math.floor(width / (cylinderRadius * 1.2));
+  
+    // Initialize circles for the river
+    let numRiverRows = Math.floor(height / 30); // Rows based on height
+    let numRiverCircles = Math.floor(width / 10); // Circles in each row based on width
+
   // Initialize circles for the river
-  for (let j = 0; j < 60; j++) { // Loop through 6 rows of circles
-    for (let i = 0; i < 120; i++) { // Loop through 40 circles in each row
+  for (let j = 0; j < numRiverRows; j++) { // Loop through 6 rows of circles
+    for (let i = 0; i < numRiverCircles; i++) { // Loop through 40 circles in each row
       // Adjust x position to start from the right side, with a curve to the left
       let x = width - i * random(15, 30); // Randomize x increment to introduce more curve
  
@@ -29,7 +37,7 @@ function setup() {
       let y = baseY + yOffset + rowOffset + downwardSlope; // Combine all for a flowing shape
  
       // Randomize the size and color of each circle
-      let circleSize = random(20, 70);
+      let circleSize = random(width / 100, width / 15);
       let blueShade = color(random(0, 100), random(100, 200), random(200, 255));
       riverCircles.push(new Circle(x, y, circleSize, blueShade));
     }
@@ -54,16 +62,26 @@ function draw() {
   drawGrass();
   pop();
 
+  // Draw the Tree element
+  if (ifDrawTree) {
+    drawTree(width/1.6, height * 0.8, -90, 9); // Start from the bottom middle, pointing upwards
+    ifDrawTree = false; // Stop drawing the tree
+  }
+
   // Draw the River element
   for (let circle of riverCircles) {
     circle.display();
   }
 
-  // Draw the Tree element
-  if (ifDrawTree) {
-    drawTree(width/1.6, height * 0.7, -90, 9); // Start from the bottom middle, pointing upwards
-    ifDrawTree = false; // Stop drawing the tree
-  }
+  
+}
+
+// Create a function for applying responsive design
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  setup(); // Reinitialize values after resizing
+  ifDrawTree = true;
+  redraw(); // Ensure all elements resize and reposition after resizing the window.
 }
 
 // Create a function to draw the Grass element using cylinders
@@ -185,7 +203,7 @@ angleMode(DEGREES); // Reset angleMode to degrees
 function drawTree(x, y, angle, number) {
   if (number > 0) {
     // Draw the main branch
-    let length = map(number, 0, 10, 10, 100);
+    let length = map(number, 0, 10, height/50, height/10); // Map the length to the window height
     let x2 = x + cos(angle) * length;
     let y2 = y + sin(angle) * length;
     stroke(random(100, 255), random(100, 255), random(100, 255));
