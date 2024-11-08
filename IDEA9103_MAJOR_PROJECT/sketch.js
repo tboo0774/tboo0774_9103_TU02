@@ -12,7 +12,6 @@ let ifDrawTree = true;
 function setup() {
   createCanvas(windowWidth, windowHeight); // Set canvas size to window width and height
   angleMode(DEGREES); // Use degrees, as opposed to radians, to measure angles
-  noLoop(); // Prevent continuous looping as we are drawing a static artwork
 
     // Calculate cylinder dimensions based on canvas size
     cylinderRows = Math.floor(height / (cylinderRadius * 0.6));
@@ -64,16 +63,13 @@ function draw() {
 
   // Draw the Tree element
   if (ifDrawTree) {
-    drawTree(width/1.6, height * 0.8, -90, 9); // Start from the bottom middle, pointing upwards
-    ifDrawTree = false; // Stop drawing the tree
+    drawTree(width/1.6, height * 0.85, -90, 10); // Start from the bottom middle, pointing upwards
   }
 
   // Draw the River element
   for (let circle of riverCircles) {
     circle.display();
-  }
-
-  
+  }  
 }
 
 // Create a function for applying responsive design
@@ -93,7 +89,7 @@ function drawGrass() {
       let yPos = (x + y) * cylinderRadius * 0.6;
      
       // Randomize the height for the top of each cylinder
-      let topHeight = random(20, 80);
+      let topHeight = random(20, 80); // Vary the height over time
 
       // Draw each cylinder with a random top height
       drawCylinder(xPos, yPos, topHeight);
@@ -141,7 +137,7 @@ class Circle {
   display() {
     fill(this.color);
     stroke(255);
-    ellipse(this.x, this.y, this.size, this.size);
+    ellipse(this.x, this.y, this.size * map(sin(frameCount * 0.02), -1, 1, 0.9, 1.1), this.size); // Add time-based pulsing effect
 
     // Use a random value between 0 and 1 to determine whether to draw a spiral or inner circles
     if (random() < 0.5) {
@@ -153,8 +149,8 @@ class Circle {
 
   // Create a method for drawing spirals inside the circle
   drawSpiral() {
-angleMode(RADIANS); // Set to radians for this function to make sure angels are not in degrees
-    stroke(255, 200);
+    angleMode(RADIANS); // Set to radians for this function to make sure angels are not in degrees
+    stroke(255, random(100,200));
     noFill();
     // Set the initial x- and y-position for the first point in the spiral
     let prevX = this.x;
@@ -175,7 +171,7 @@ angleMode(RADIANS); // Set to radians for this function to make sure angels are 
       prevX = x;
       prevY = y;
     }
-angleMode(DEGREES); // Reset angleMode to degrees
+  angleMode(DEGREES); // Reset angleMode to degrees
   }
 
   // Create a method for drawing smaller circles inside the circle
@@ -203,9 +199,11 @@ angleMode(DEGREES); // Reset angleMode to degrees
 function drawTree(x, y, angle, number) {
   if (number > 0) {
     // Draw the main branch
+    let timeControlledAngle = angle + sin(frameCount * 0.05) * 10; // Animate the angle slightly
     let length = map(number, 0, 10, height/50, height/10); // Map the length to the window height
-    let x2 = x + cos(angle) * length;
-    let y2 = y + sin(angle) * length;
+    let x2 = x + cos(timeControlledAngle) * length;
+    let y2 = y + sin(timeControlledAngle) * length;
+    strokeWeight(2);
     stroke(random(100, 255), random(100, 255), random(100, 255));
     line(x, y, x2, y2);
 
@@ -213,8 +211,8 @@ function drawTree(x, y, angle, number) {
     drawTreeCircles(x2, y2, number);
 
     // Create 2 branches from the previous branch until the number value becomes 0
-    drawTree(x2, y2, angle - random(15, 30), number - 1);
-    drawTree(x2, y2, angle + random(15, 30), number - 1);
+    drawTree(x2, y2, timeControlledAngle - random(15, 30), number - 1);
+    drawTree(x2, y2, timeControlledAngle + random(15, 30), number - 1);
   }
 }
 
