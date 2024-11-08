@@ -13,13 +13,17 @@ function setup() {
   createCanvas(windowWidth, windowHeight); // Set canvas size to window width and height
   angleMode(DEGREES); // Use degrees, as opposed to radians, to measure angles
 
-    // Calculate cylinder dimensions based on canvas size
-    cylinderRows = Math.floor(height / (cylinderRadius * 0.6));
-    cylinderCols = Math.floor(width / (cylinderRadius * 1.2));
+  // Set frame rate
+  //frameRate(300);
+
+
+  // Calculate cylinder dimensions based on canvas size
+  cylinderRows = Math.floor(height / (cylinderRadius * 0.6));
+  cylinderCols = Math.floor(width / (cylinderRadius * 1.2));
   
-    // Initialize circles for the river
-    let numRiverRows = Math.floor(height / 30); // Rows based on height
-    let numRiverCircles = Math.floor(width / 10); // Circles in each row based on width
+  // Initialize circles for the river
+  let numRiverRows = Math.floor(height / 30); // Rows based on height
+  let numRiverCircles = Math.floor(width / 10); // Circles in each row based on width
 
   // Initialize circles for the river
   for (let j = 0; j < numRiverRows; j++) { // Loop through 6 rows of circles
@@ -66,6 +70,15 @@ function draw() {
     drawTree(width/1.6, height * 0.85, -90, 10); // Start from the bottom middle, pointing upwards
   }
 
+  // Update and display each leaf
+  for (let leaf of leaves) {
+    leaf.update();
+    leaf.display();
+  }
+
+  // Remove leaves that have fallen off the canvas
+  leaves = leaves.filter(leaf => leaf.y < height);
+
   // Draw the River element
   for (let circle of riverCircles) {
     circle.display();
@@ -103,9 +116,9 @@ function drawCylinder(x, y, topHeight) {
   translate(x, y); // Place the cylinder at the specified origin (x,y)
 
   // Draw the side face of the cylinder
-  fill(random(50,255), 196, 82);
-  strokeWeight(1);
-  stroke(255);
+  fill(random(10,100), random(130,150), 60);
+  // noStroke();
+  stroke(7,110,93);
  
   /* The usage of beginShape() and endShape() functions was modified from the examples on https://p5js.org/reference/p5/beginShape/.
   These two functions allow for creating a custom shape by adding vertices in the vertex() function.
@@ -119,7 +132,7 @@ function drawCylinder(x, y, topHeight) {
  
 
   // Draw the top face of the cylinder as an ellipse at the new top height
-  fill(random(32,100), 152, 48);
+  fill(random(32,100), 190, 80);
   ellipse(0, -topHeight, cylinderRadius * 2, cylinderRadius * 0.8);
   pop();
 }
@@ -131,12 +144,14 @@ class Circle {
     this.y = y;
     this.size = size;
     this.color = color;
+    this.rotationSpeed = random(0.01,0.05); // Set a random rotation speed for each spiral
   }
 
   // Create a method for drawing circles
   display() {
     fill(this.color);
     stroke(255);
+    strokeWeight(1);
     ellipse(this.x, this.y, this.size * map(sin(frameCount * 0.02), -1, 1, 0.9, 1.1), this.size); // Add time-based pulsing effect
 
     // Use a random value between 0 and 1 to determine whether to draw a spiral or inner circles
@@ -152,6 +167,10 @@ class Circle {
     angleMode(RADIANS); // Set to radians for this function to make sure angels are not in degrees
     stroke(255, random(100,200));
     noFill();
+
+    // Set the rotation amount based on frameCount and rotationSpeed
+    let rotation = frameCount * this.rotationSpeed * 3; 
+
     // Set the initial x- and y-position for the first point in the spiral
     let prevX = this.x;
     let prevY = this.y;
@@ -160,9 +179,9 @@ class Circle {
     for (let angle = 0; angle < TWO_PI * 4; angle += 0.05) {
       let r = map(angle, 0, TWO_PI * 4, 0, this.size / 2 - 1); // Map the angle to a radius, increasing as the angle increases
      
-      // Calculate the x- and y-position for the current point in the spiral
-      let x = this.x + r * cos(angle);
-      let y = this.y + r * sin(angle);
+      // Calculate the x- and y-position for the current point in the spiral, applying the rotation offset
+      let x = this.x + r * cos(angle + rotation);
+      let y = this.y + r * sin(angle + rotation);
      
       // Draw a line from the previous point to the current point to create the spiral
       line(prevX, prevY, x, y);  
@@ -171,7 +190,7 @@ class Circle {
       prevX = x;
       prevY = y;
     }
-  angleMode(DEGREES); // Reset angleMode to degrees
+    angleMode(DEGREES); // Reset angleMode to degrees
   }
 
   // Create a method for drawing smaller circles inside the circle
@@ -195,16 +214,20 @@ class Circle {
   }
 }
 
+
+let leaves = []; // Array to store leaves
+let maxLeaves = 6000; // Maximum number of leaves allowed
+
 // Create a function to draw the Tree element
 function drawTree(x, y, angle, number) {
   if (number > 0) {
     // Draw the main branch
-    let timeControlledAngle = angle + sin(frameCount * 0.05) * 10; // Animate the angle slightly
+    let timeControlledAngle = angle + sin(frameCount * 0.02) * 10; // Animate the angle slightly
     let length = map(number, 0, 10, height/50, height/10); // Map the length to the window height
     let x2 = x + cos(timeControlledAngle) * length;
     let y2 = y + sin(timeControlledAngle) * length;
-    strokeWeight(2);
     stroke(random(100, 255), random(100, 255), random(100, 255));
+    strokeWeight(2);
     line(x, y, x2, y2);
 
     // Call the function to draw circles around every branch
@@ -225,17 +248,46 @@ function drawTreeCircles(x, y, number) {
     ellipse(x, y, i * 10, i * 10);
   }
 
-   // Draw some dots around the circles to present leaves
-  for (let i = 0; i < number * 2; i++) {
-    let angle = random(360);
-    let radius = random(number * 5, number * 10);
-    let xOffset = cos(angle) * radius;
-    let yOffset = sin(angle) * radius;
-    fill(random(100, 255), random(100, 255), random(100, 255), 200);
-    noStroke();
-    circle(x + xOffset, y + yOffset, 5);
+  // Add new leaves if the leaves array has not reached maxLeaves
+  if (leaves.length < maxLeaves) {
+    for (let i = 0; i < number; i++) {
+      let angle = random(360);
+      let radius = random(number * 5, number * 10);
+      let xOffset = cos(angle) * radius;
+      let yOffset = sin(angle) * radius;
+      let leafColor = color(random(100, 255), random(100, 255), random(100, 255), 200);
+
+      // Add a new leaf to the leaves array
+      leaves.push(new Leaf(x + xOffset, y + yOffset, leafColor));
+    }
   }
 }
+
+// Leaf class to represent each falling leaf
+class Leaf {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.size = random(3, 7); // Random size for each leaf
+    this.speed = random(5, 10); // Random speed for falling
+  }
+
+  // Update the position of the leaf to make it fall
+  update() {
+    this.y += this.speed; // Move down
+    this.x += sin(frameCount * 0.1) * 0.5; // Small horizontal sway
+    this.speed += 0.05; // Increase the falling speed over time
+  }
+
+  // Display the leaf
+  display() {
+    fill(this.color);
+    noStroke();
+    ellipse(this.x, this.y, this.size);
+  }
+}
+
 
 // Create a function to draw the Sky element
 function drawGradientSky() {
