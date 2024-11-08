@@ -145,6 +145,12 @@ class Circle {
     this.size = size;
     this.color = color;
     this.rotationSpeed = random(0.01,0.05); // Set a random rotation speed for each spiral
+    
+    // Add properties for a fish
+    this.fishJumpHeight = 0; // The maximum height that the fish will jump to
+    this.fishJumping = false; // A boolean value that controls the jumping action
+    this.fishDirection = 1; // 1 for up, -1 for down
+    this.fishX = random(this.x - 20, this.x + 20); // Randomize fish position near the circle
   }
 
   // Create a method for drawing circles
@@ -154,12 +160,58 @@ class Circle {
     strokeWeight(1);
     ellipse(this.x, this.y, this.size * map(sin(frameCount * 0.02), -1, 1, 0.9, 1.1), this.size); // Add time-based pulsing effect
 
+    // Randomly decide if the fish should jump
+    // If the random value is less than the specified value and fishJumping is False, toggle fishJumping to True and set the moving direction to up
+    if (random(1) < 0.006 && !this.fishJumping) {
+      this.fishJumping = true;
+      this.fishJumpHeight = 0;
+      this.fishDirection = 1;
+    }
+
+    // If the fishJumping is True, call the drawFish() method
+    if (this.fishJumping) {
+      this.drawFish();
+    }
+
     // Use a random value between 0 and 1 to determine whether to draw a spiral or inner circles
     if (random() < 0.5) {
       this.drawSpiral();
     } else {
       this.drawInnerCircles();
     }
+  }
+
+  // Create a method to draw a jumping fish
+  drawFish() {
+    // Define a set of conditions to control the jump movement
+    // If the fishDirection is set to 1, move the fish up by increasing the jump height
+    if (this.fishDirection === 1) {
+      this.fishJumpHeight += 2;
+
+      // If the fish reaches the peak of its jump, switch to moving down
+      if (this.fishJumpHeight > 40) {
+        this.fishDirection = -1;
+      }
+    // If the fishDirection is not 1, move the fish down by decreasing the jump height
+    } else {
+      this.fishJumpHeight -= 2;
+
+      // If the fishJumpHeight has returned to 0 or less, end the jump by reseting the fishJumpHeight and fishJumping values
+      if (this.fishJumpHeight <= 0) {
+        this.fishJumpHeight = 0;
+        this.fishJumping = false;
+      }
+    }
+
+    // Draw the fish above the river circle
+    // The shape of a fish is made up of a simple ellipse for body and triangle for tail
+    push();
+    translate(this.fishX, this.y - this.fishJumpHeight);
+    fill(255, 150, 0);
+    noStroke();
+    ellipse(0, 0, 20, 10); // Fish body
+    triangle(-10, 0, -20, -5, -20, 5); // Fish tail
+    pop();
   }
 
   // Create a method for drawing spirals inside the circle
@@ -336,4 +388,3 @@ function drawStars() {
     ellipse(xPos, yPos, w, h);
   }
 }
-
